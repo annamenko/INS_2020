@@ -2,16 +2,20 @@ import numpy as np
 from keras.layers import Dense
 from keras.models import Sequential
 
+
 def relu(x):
     return np.maximum(x, 0)
+
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
+
 def result_of_operation(a, b, c):
     return (a and b) or (a and c)
 
-def get_matrix_truth():
+
+def get_source_data():
     return np.array([[0, 0, 0],
                     [0, 0, 1],
                     [0, 1, 0],
@@ -21,8 +25,9 @@ def get_matrix_truth():
                     [1, 1, 0],
                     [1, 1, 1]])
 
+
 def result_of_matrix():
-    return np.array([result_of_operation(*i) for i in get_matrix_truth()])
+    return np.array([result_of_operation(*i) for i in get_source_data()])
 
 
 def tensor_result(dataset, weights):
@@ -59,8 +64,6 @@ def my_print(model, dataset):
     model_res = model.predict(dataset)
     print(tensor_res)
     print(model_res)
-    assert np.isclose(tensor_res, model_res).all()
-    assert np.isclose(each_el, model_res).all()
     print("Результат тензорного вычисления:")
     print(tensor_res)
     print("Результат вычисления каждого элемента")
@@ -69,25 +72,16 @@ def my_print(model, dataset):
     print(model_res)
 
 
-def create_model():
+def start():
+    train_data = get_source_data()
+    validation_data = result_of_matrix()
     model = Sequential()
     model.add(Dense(5, activation='relu', input_shape=(3,)))
     model.add(Dense(4, activation='relu'))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-    return model
-
-
-def fit_model(model, train, validation):
-    return model.fit(train, validation, epochs=12, batch_size=1)
-
-
-def start():
-    train_data = get_matrix_truth()
-    validation_data = result_of_matrix()
-    model = create_model()
     my_print(model, train_data)
-    fit_model(model, train_data, validation_data)
+    model.fit(train_data, validation_data, epochs=12, batch_size=1)
     my_print(model, train_data)
 
 
