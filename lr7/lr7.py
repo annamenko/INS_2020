@@ -94,6 +94,39 @@ y_test = np.asarray(y_test).astype("float32")
 y_train = np.asarray(y_train).astype("float32")
 custom_y = np.asarray(custom_y).astype("float32")
 
+
+def encode_review(rev):
+    res = []
+    for i, el in enumerate(rev):
+        el = el.lower()
+        delete_el = [',', '!', '.', '?']
+        for d_el in delete_el:
+            el = el.replace(d_el, '')
+        el = el.split()
+        for j, word in enumerate(el):
+            code = imdb.get_word_index().get(word)
+            if code is None:
+                code = 0
+            el[j] = code
+        res.append(el)
+    for i, r in enumerate(res):
+        res[i] = sequence.pad_sequences([r], maxlen=MAX_REVIEW_LENGTH)
+    res = np.array(res)
+    return res.reshape((res.shape[0], res.shape[2]))
+
+
+def smart_predict(model, model_2, input):
+    pred1 = model.predict(input)
+    pred2 = model_2.predict(input)
+    pred = [1 if (pred1[i] + pred2[i]) / 2 > 0.5 else 0 for i in range(len(pred1))]
+    return np.array(pred)
+
+
+def review(model, model_2, review):
+    data = encode_review(review)
+    print(smart_predict(model, model_2, data))
+
+
 model = Sequential()
 model.add(Embedding(10000, EMBEDING_VECOR_LENGTH, input_length=MAX_REVIEW_LENGTH))
 model.add(Conv1D(filters=32, kernel_size=3, padding='same', activation='relu'))
@@ -104,28 +137,38 @@ model.add(LSTM(100))
 model.add(Dropout(0.3))
 model.add(Dense(1, activation='sigmoid'))
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+model_2 = Sequential()
+model_2.add(Embedding(10000, EMBEDING_VECOR_LENGTH, input_length=MAX_REVIEW_LENGTH))
+model_2.add(LSTM(100))
+model_2.add(Dense(1, activation='sigmoid'))
+
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+model_2.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
 H = model.fit(x_train,
-          y_train,
-          batch_size=64,
-          epochs=2,
-          verbose=1,
-          validation_split=0.1
-          )
+              y_train,
+              batch_size=64,
+              epochs=2,
+              verbose=1,
+              validation_split=0.1
+              )
 
-_, acc = model.evaluate(x_test, y_test)
-print('Test', acc)
+H_2 = model_2.fit(
+    x_train,
+    y_train,
+    batch_size=64,
+    epochs=2,
+    verbose=1,
+    validation_split=0.1
+)
 
-print(custom_x, custom_y)
-plot_loss(H.history['loss'], H.history['val_loss'])
-plot_acc(H.history['accuracy'], H.history['val_accuracy'])
-custom_loss, custom_acc = model.evaluate(custom_x, custom_y)
-print('custom_acc:', custom_acc)
-preds = model.predict(custom_x)
-print(preds)
-plt.figure(3, figsize=(8, 5))
-plt.title("Custom dataset predications")
-plt.plot(custom_y, 'r', marker='v', label='truth')
-plt.plot(preds, 'b', marker='x', label='pred')
-plt.legend()
-plt.show()
-plt.clf()
+
+review(model, model_2, [
+    "it's very boring film",
+    "it's very good",
+    "it's boring",
+    "fantastic film wonderful",
+    "beautiful, good"
+])
+    
