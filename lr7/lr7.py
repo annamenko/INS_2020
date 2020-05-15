@@ -128,7 +128,7 @@ def review(model, model_2, review):
 
 
 model = Sequential()
-model.add(Embedding(10000, EMBEDING_VECOR_LENGTH, input_length=MAX_REVIEW_LENGTH))
+model.add(Embedding(10000, 32, input_length=500))
 model.add(Conv1D(filters=32, kernel_size=3, padding='same', activation='relu'))
 model.add(Dropout(0.3))
 model.add(MaxPooling1D(pool_size=2))
@@ -139,7 +139,7 @@ model.add(Dense(1, activation='sigmoid'))
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 model_2 = Sequential()
-model_2.add(Embedding(10000, EMBEDING_VECOR_LENGTH, input_length=MAX_REVIEW_LENGTH))
+model_2.add(Embedding(10000, 32, input_length=500))
 model_2.add(LSTM(100))
 model_2.add(Dense(1, activation='sigmoid'))
 
@@ -171,4 +171,3 @@ review(model, model_2, [
     "fantastic film wonderful",
     "beautiful, good"
 ])
-    
